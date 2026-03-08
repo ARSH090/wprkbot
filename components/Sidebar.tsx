@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BrainCircuit, Settings, MessageSquare } from 'lucide-react'
+import { signOut } from 'next-auth/react'
+import { LayoutDashboard, Users, BrainCircuit, Settings, MessageSquare, LogOut } from 'lucide-react'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -36,6 +37,14 @@ export default function Sidebar() {
             </Link>
           )
         })}
+
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="w-full flex items-center px-6 py-3 mt-4 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          <span className="font-medium text-sm">Sign Out</span>
+        </button>
       </nav>
       <div className="p-6 border-t border-gray-800 text-xs text-gray-600">
         &copy; 2026 Bajaj Bot Dashboard
