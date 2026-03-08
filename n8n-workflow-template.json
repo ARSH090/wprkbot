@@ -1,0 +1,134 @@
+{
+    "name": "Bajaj Bot Complete Flow",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "messenger-webhook",
+                "options": {}
+            },
+            "name": "Messenger Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "INSERT INTO leads (messenger_id, state) VALUES ('{{$json.body.entry[0].messaging[0].sender.id}}', 'idle') ON CONFLICT (messenger_id) DO NOTHING;"
+            },
+            "name": "Init Lead Supabase",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.2,
+            "position": [
+                450,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "1",
+                    "name": "Bajaj Supabase DB"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "modelId": {
+                    "__rl": true,
+                    "value": "gpt-4o",
+                    "mode": "list"
+                },
+                "messages": {
+                    "messageValues": [
+                        {
+                            "message": "={{$json.body.entry[0].messaging[0].message.text}}"
+                        }
+                    ]
+                }
+            },
+            "name": "OpenAI Chat",
+            "type": "@n8n/n8n-nodes-langchain.openAiChatModel",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "2",
+                    "name": "Global OpenAI Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "https://puppeteer.railway.app/check-loan",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "name",
+                            "value": "={{$node[\"OpenAI Chat\"].json.extractedName}}"
+                        },
+                        {
+                            "name": "mobile",
+                            "value": "={{$node[\"OpenAI Chat\"].json.extractedMobile}}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "abc-123",
+            "name": "Puppeteer Fetch",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                850,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Messenger Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Init Lead Supabase",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Init Lead Supabase": {
+            "main": [
+                [
+                    {
+                        "node": "OpenAI Chat",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat": {
+            "main": [
+                [
+                    {
+                        "node": "Puppeteer Fetch",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "xxx"
+}
