@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { formatDistanceToNow } from 'date-fns'
+import toast from 'react-hot-toast'
 import { Search, Download, RefreshCw, XCircle, FileText, Image as ImageIcon } from 'lucide-react'
 
 export default function Leads() {
@@ -17,6 +18,31 @@ export default function Leads() {
   const [logsModalOpen, setLogsModalOpen] = useState(false)
   const [currentLogs, setCurrentLogs] = useState<any[]>([])
   const [loadingLogs, setLoadingLogs] = useState(false)
+
+  // State for expanded view chat history
+  const [expandedLogs, setExpandedLogs] = useState<any[]>([])
+  const [loadingExpandedLogs, setLoadingExpandedLogs] = useState(false)
+
+  const handleExpand = async (id: string) => {
+    if (expandedId === id) {
+      setExpandedId(null)
+      return
+    }
+    setExpandedId(id)
+    setLoadingExpandedLogs(true)
+    try {
+      const res = await fetch(`/api/leads/${id}/logs`)
+      const result = await res.json()
+      if (result.success) {
+        setExpandedLogs(result.data)
+      } else {
+        setExpandedLogs([])
+      }
+    } catch (err) {
+      setExpandedLogs([])
+    }
+    setLoadingExpandedLogs(false)
+  }
 
   useEffect(() => {
     fetchLeads()
@@ -146,7 +172,7 @@ export default function Leads() {
             <div key={lead.id} className="bg-[#0d1117] border border-gray-800 rounded-xl overflow-hidden transition-all hover:border-gray-700">
               <div
                 className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
-                onClick={() => setExpandedId(expandedId === lead.id ? null : lead.id)}
+                onClick={() => handleExpand(lead.id)}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 font-bold uppercase">
@@ -206,9 +232,18 @@ export default function Leads() {
                         <button
                           onClick={async (e) => {
                             e.stopPropagation()
-                            await fetch('/api/retry', { method: 'POST', body: JSON.stringify({ messenger_id: lead.messenger_id }) })
-                            alert('Retried!')
-                            fetchLeads()
+                            const loadingToast = toast.loading('Retrying lead...')
+                            try {
+                              const res = await fetch('/api/retry', { method: 'POST', body: JSON.stringify({ messenger_id: lead.messenger_id }) })
+                              if (res.ok) {
+                                toast.success('Lead status updated to Retrying!', { id: loadingToast })
+                                fetchLeads()
+                              } else {
+                                toast.error('Failed to retry.', { id: loadingToast })
+                              }
+                            } catch (err) {
+                              toast.error('An error occurred.', { id: loadingToast })
+                            }
                           }}
                           className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-500 hover:bg-blue-500/30 rounded text-sm font-medium transition-colors"
                         >
@@ -218,16 +253,17 @@ export default function Leads() {
                           onClick={async (e) => {
                             e.stopPropagation()
                             if (!confirm('Mark this lead as failed?')) return;
+                            const loadingToast = toast.loading('Marking as failed...')
                             try {
                               const res = await fetch(`/api/leads/${lead.id}/status`, { method: 'POST' })
                               if (res.ok) {
-                                alert('Lead marked as failed')
+                                toast.success('Lead marked as failed', { id: loadingToast })
                                 fetchLeads()
                               } else {
-                                alert('Failed to update lead')
+                                toast.error('Failed to update lead', { id: loadingToast })
                               }
                             } catch (err) {
-                              alert('An error occurred')
+                              toast.error('An error occurred', { id: loadingToast })
                             }
                           }}
                           className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded text-sm font-medium transition-colors"
@@ -263,8 +299,31 @@ export default function Leads() {
                   {/* Middle Col: Chat Simulation */}
                   <div className="lg:col-span-1">
                     <h3 className="text-sm border-b border-gray-800 pb-2 mb-3 font-semibold text-white tracking-wide">CHAT HISTORY</h3>
-                    <div className="bg-[#030305] rounded-lg border border-gray-800 h-64 overflow-y-auto p-3 text-xs text-gray-400 flex items-center justify-center">
-                      (Chat history simulation area)
+                    <div className="bg-[#030305] rounded-lg border border-gray-800 h-64 overflow-y-auto p-3 text-xs flex flex-col gap-2">
+                      {loadingExpandedLogs ? (
+                        <div className="text-center text-gray-500 my-auto">Loading chat history...</div>
+                      ) : expandedLogs.length === 0 ? (
+                        <div className="text-center text-gray-500 my-auto">No chat history found.</div>
+                      ) : (
+                        expandedLogs.filter(l => l.step && l.step.includes('Message')).length > 0 ? (
+                          expandedLogs
+                            .filter(l => l.step && l.step.includes('Message'))
+                            .reverse()
+                            .map((msg, i) => {
+                              const isBot = msg.step.includes('Sent')
+                              return (
+                                <div key={i} className={`flex flex-col ${isBot ? 'items-end' : 'items-start'}`}>
+                                  <div className={`px-3 py-2 rounded-lg max-w-[85%] ${isBot ? 'bg-blue-600/20 text-blue-100 border border-blue-500/30 rounded-br-none' : 'bg-gray-800/50 text-gray-200 border border-gray-700 rounded-bl-none'}`}>
+                                    {msg.message}
+                                  </div>
+                                  <span className="text-[10px] text-gray-500 mt-1">{msg.created_at ? formatDistanceToNow(new Date(msg.created_at)) : ''}</span>
+                                </div>
+                              )
+                            })
+                        ) : (
+                          <div className="text-center text-gray-500 my-auto">No messages recorded. Check Logs.</div>
+                        )
+                      )}
                     </div>
                   </div>
 

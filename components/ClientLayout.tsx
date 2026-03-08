@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { SessionProvider } from 'next-auth/react'
+import { Toaster } from 'react-hot-toast'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 
@@ -14,6 +15,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <SessionProvider>
                 <div className="flex-1">
                     {children}
+                    <Toaster position="bottom-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
                 </div>
             </SessionProvider>
         )
@@ -26,6 +28,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 <Header />
                 <main className="flex-1 overflow-auto bg-[#0a0a0c] p-6">
                     {children}
+                    <Toaster position="bottom-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
                 </main>
             </div>
         </SessionProvider>
