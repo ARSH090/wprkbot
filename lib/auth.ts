@@ -39,11 +39,28 @@ export const authOptions: NextAuthOptions = {
                 return {
                     id: user.id.toString(),
                     email: user.email,
-                    name: user.role, // Or add a name field to the DB if preferred
+                    name: user.role, // Using 'name' to store the role temporarily
+                    role: user.role, // Custom field
                 };
             }
         })
     ],
+    callbacks: {
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id;
+                token.role = (user as any).role;
+            }
+            return token;
+        },
+        async session({ session, token }) {
+            if (session.user) {
+                (session.user as any).id = token.id;
+                (session.user as any).role = token.role;
+            }
+            return session;
+        }
+    },
     session: {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 Days
