@@ -13,6 +13,11 @@ export default function Leads() {
   const [filter, setFilter] = useState('All')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
+  // Modal state for logs
+  const [logsModalOpen, setLogsModalOpen] = useState(false)
+  const [currentLogs, setCurrentLogs] = useState<any[]>([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
+
   useEffect(() => {
     fetchLeads()
   }, [])
@@ -209,10 +214,46 @@ export default function Leads() {
                         >
                           <RefreshCw className="w-4 h-4" /> Retry Lead
                         </button>
-                        <button className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded text-sm font-medium transition-colors">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (!confirm('Mark this lead as failed?')) return;
+                            try {
+                              const res = await fetch(`/api/leads/${lead.id}/status`, { method: 'POST' })
+                              if (res.ok) {
+                                alert('Lead marked as failed')
+                                fetchLeads()
+                              } else {
+                                alert('Failed to update lead')
+                              }
+                            } catch (err) {
+                              alert('An error occurred')
+                            }
+                          }}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded text-sm font-medium transition-colors"
+                        >
                           <XCircle className="w-4 h-4" /> Mark Failed
                         </button>
-                        <button className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 text-gray-300 hover:bg-gray-700 rounded text-sm font-medium transition-colors">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            setLogsModalOpen(true)
+                            setLoadingLogs(true)
+                            try {
+                              const res = await fetch(`/api/leads/${lead.id}/logs`)
+                              const result = await res.json()
+                              if (result.success) {
+                                setCurrentLogs(result.data)
+                              } else {
+                                setCurrentLogs([])
+                              }
+                            } catch (err) {
+                              setCurrentLogs([])
+                            }
+                            setLoadingLogs(false)
+                          }}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 text-gray-300 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+                        >
                           <FileText className="w-4 h-4" /> Logs
                         </button>
                       </div>
@@ -252,6 +293,44 @@ export default function Leads() {
           ))
         )}
       </div>
+
+      {/* Logs Modal */}
+      {logsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setLogsModalOpen(false)}>
+          <div className="bg-[#0d1117] border border-gray-800 rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0c]">
+              <h2 className="font-bold text-white flex items-center gap-2"><FileText className="w-5 h-5 text-gray-400" /> Automation Logs</h2>
+              <button onClick={() => setLogsModalOpen(false)} className="text-gray-400 hover:text-white"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-[#0a0a0c]">
+              {loadingLogs ? (
+                <div className="text-center py-8 text-gray-500">Loading logs...</div>
+              ) : currentLogs.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">No logs found for this lead.</div>
+              ) : (
+                currentLogs.map((log) => {
+                  let colorClass = 'border-gray-800 bg-gray-800/20 text-gray-300'
+                  if (log.status === 'success') colorClass = 'border-green-500/30 bg-green-500/10 text-green-400'
+                  if (log.status === 'error' || log.status === 'failed') colorClass = 'border-red-500/30 bg-red-500/10 text-red-400'
+                  if (log.status === 'info') colorClass = 'border-blue-500/30 bg-blue-500/10 text-blue-400'
+
+                  return (
+                    <div key={log.id} className={`p-3 rounded-lg border ${colorClass} text-sm`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold">{log.step}</span>
+                        <span className="text-xs opacity-70">
+                          {log.created_at ? formatDistanceToNow(new Date(log.created_at), { addSuffix: true }) : ''}
+                        </span>
+                      </div>
+                      <div className="opacity-90">{log.message}</div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
