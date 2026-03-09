@@ -38,7 +38,7 @@
             "parameters": {
                 "modelId": {
                     "__rl": true,
-                    "value": "gpt-4o",
+                    "value": "anthropic/claude-3-haiku",
                     "mode": "list"
                 },
                 "messages": {
