@@ -9,6 +9,6 @@ export default withAuth({
 export const config = {
     matcher: [
         // Match all routes except login, auth APIs, public files, and webhook test
-        "/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)",
+        "/((?!login|api/auth|api/diag|_next/static|_next/image|favicon.ico).*)",
     ],
 };
