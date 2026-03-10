@@ -10,18 +10,23 @@ export async function GET(request) {
         const searchParams = request.nextUrl.searchParams;
         const code = searchParams.get('code');
 
+        // Use current origin for redirect_uri consistency
+        const origin = request.nextUrl.origin;
+
         if (!code) {
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=NoCodeProvided`);
+            return NextResponse.redirect(`${origin}/connect?error=NoCodeProvided`);
         }
 
         // 1. Exchange code for user access token
         const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.FACEBOOK_APP_ID;
         const appSecret = process.env.FACEBOOK_APP_SECRET;
 
+        const redirectUriInToken = `${origin}/api/facebook/callback`;
+
         const tokenUrl = new URL('https://graph.facebook.com/v18.0/oauth/access_token');
         tokenUrl.searchParams.append('client_id', appId);
         tokenUrl.searchParams.append('client_secret', appSecret);
-        tokenUrl.searchParams.append('redirect_uri', `${process.env.NEXTAUTH_URL || ''}/api/facebook/callback`);
+        tokenUrl.searchParams.append('redirect_uri', redirectUriInToken);
         tokenUrl.searchParams.append('code', code);
 
         const tokenRes = await fetch(tokenUrl.toString());
@@ -29,7 +34,7 @@ export async function GET(request) {
 
         if (tokenData.error) {
             console.error("Facebook token exchange error:", tokenData.error);
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=${encodeURIComponent(tokenData.error.message)}`);
+            return NextResponse.redirect(`${origin}/connect?error=${encodeURIComponent(tokenData.error.message)}`);
         }
 
         const shortLivedToken = tokenData.access_token;
@@ -46,7 +51,7 @@ export async function GET(request) {
 
         if (longLivedData.error) {
             console.error("Facebook long-lived token exchange error:", longLivedData.error);
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=${encodeURIComponent(longLivedData.error.message)}`);
+            return NextResponse.redirect(`${origin}/connect?error=${encodeURIComponent(longLivedData.error.message)}`);
         }
 
         const userToken = longLivedData.access_token;
@@ -60,16 +65,18 @@ export async function GET(request) {
 
         if (pagesData.error) {
             console.error("Facebook get pages error:", pagesData.error);
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=${encodeURIComponent(pagesData.error.message)}`);
+            return NextResponse.redirect(`${origin}/connect?error=${encodeURIComponent(pagesData.error.message)}`);
         }
 
         const encodedPages = encodeURIComponent(JSON.stringify(pagesData.data || []));
 
         // Redirect back to connection wizard with pages data
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?pages=${encodedPages}`);
+        return NextResponse.redirect(`${origin}/connect?pages=${encodedPages}`);
 
     } catch (error) {
         console.error('Facebook OAuth callback error:', error);
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=SystemError`);
+        // Fallback to origin or root if origin is not available
+        const origin = request.nextUrl.origin || '';
+        return NextResponse.redirect(`${origin}/connect?error=SystemError`);
     }
 }

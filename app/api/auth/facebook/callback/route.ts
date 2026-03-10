@@ -5,13 +5,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
 
+    const { origin } = new URL(request.url)
     const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.FACEBOOK_APP_ID
     const appSecret = process.env.FACEBOOK_APP_SECRET
-    // Construct redirect URI based on NEXTAUTH_URL
-    const redirectUri = `${process.env.NEXTAUTH_URL || ''}/api/auth/facebook/callback`
+    // Construct redirect URI based on current origin for consistency
+    const redirectUri = `${origin}/api/auth/facebook/callback`
 
     if (!code) {
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=no_code`)
+        return NextResponse.redirect(`${origin}/connect?error=no_code`)
     }
 
     try {
