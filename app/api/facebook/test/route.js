@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(request) {
     try {
@@ -8,7 +8,7 @@ export async function POST(request) {
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         // 1. Fetch token and page ID from DB
-        const { data: settingsData, error } = await supabase
+        const { data: settingsData, error } = await supabaseServer
             .from('bot_settings')
             .select('key, value')
             .in('key', ['fb_page_access_token', 'fb_page_id', 'admin_messenger_id']);

@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(request) {
     try {
@@ -20,7 +20,7 @@ export async function POST(request) {
         ];
 
         for (const setting of settingsToSave) {
-            const { error } = await supabase
+            const { error } = await supabaseServer
                 .from('bot_settings')
                 .upsert({ key: setting.key, value: setting.value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 

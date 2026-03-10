@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(request) {
     try {
@@ -9,7 +9,7 @@ export async function POST(request) {
 
         const keysToDelete = ['fb_page_access_token', 'fb_page_id', 'fb_page_name'];
 
-        const { error } = await supabase
+        const { error } = await supabaseServer
             .from('bot_settings')
             .delete()
             .in('key', keysToDelete);

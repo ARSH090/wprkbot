@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
         if (tokenData.error || !tokenData.access_token) {
             console.error('Meta OAuth Token Error:', tokenData.error)
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=token_exchange_failed`)
+            return NextResponse.redirect(`${origin}/connect?error=token_exchange_failed`)
         }
 
         const shortLivedToken = tokenData.access_token
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
         const pagesData = await pagesRes.json()
 
         if (!pagesData.data || pagesData.data.length === 0) {
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=no_pages_found`)
+            return NextResponse.redirect(`${origin}/connect?error=no_pages_found`)
         }
 
         // For simplicity, we just use the first page's access token and name
@@ -46,13 +46,13 @@ export async function GET(request: Request) {
         const pageName = page.name
 
         // 4. Save Page Access Token and Page Name to Supabase bot_settings
-        await supabase.from('bot_settings').upsert([
+        await supabaseServer.from('bot_settings').upsert([
             { key: 'fb_page_access_token', value: pageAccessToken },
             { key: 'fb_page_name', value: pageName }
         ], { onConflict: 'key' })
 
         // Redirect back to connection page with success
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?success=true`)
+        return NextResponse.redirect(`${origin}/connect?success=true`)
     } catch (err) {
         console.error('FB Callback Error:', err)
         return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connect?error=system_error`)
