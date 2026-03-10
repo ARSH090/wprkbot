@@ -1,0 +1,75 @@
+
+> bajaj-bot-dashboard@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/21) ...
+   Generating static pages (5/21) 
+Facebook OAuth callback error: n [Error]: Dynamic server usage: Route /api/facebook/callback couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (E:\bajaj\bajaj-bot-dashboard\.next\server\chunks\948.js:1:37218)
+    at d (E:\bajaj\bajaj-bot-dashboard\.next\server\chunks\609.js:25:26443)
+    at s (E:\bajaj\bajaj-bot-dashboard\.next\server\chunks\609.js:25:19584)
+    at i (E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\facebook\callback\route.js:1:1233)
+    at E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:38417
+    at E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/facebook/callback couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (10/21) 
+   Generating static pages (15/21) 
+ ✓ Generating static pages (21/21)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    138 B          87.5 kB
+├ ○ /_not-found                          873 B          88.2 kB
+├ ƒ /api/auth/[...nextauth]              0 B                0 B
+├ ƒ /api/auth/facebook/callback          0 B                0 B
+├ ƒ /api/bot-toggle                      0 B                0 B
+├ ƒ /api/facebook/callback               0 B                0 B
+├ ƒ /api/facebook/disconnect             0 B                0 B
+├ ƒ /api/facebook/pages                  0 B                0 B
+├ ƒ /api/facebook/test                   0 B                0 B
+├ ƒ /api/kyc                             0 B                0 B
+├ ƒ /api/leads                           0 B                0 B
+├ ƒ /api/leads/[id]                      0 B                0 B
+├ ƒ /api/leads/[id]/logs                 0 B                0 B
+├ ƒ /api/leads/[id]/status               0 B                0 B
+├ ƒ /api/logs/[leadId]                   0 B                0 B
+├ ƒ /api/retry                           0 B                0 B
+├ ƒ /api/settings                        0 B                0 B
+├ ƒ /api/stats                           0 B                0 B
+├ ƒ /api/team                            0 B                0 B
+├ ƒ /api/team/[id]                       0 B                0 B
+├ ƒ /api/team/resend                     0 B                0 B
+├ ○ /connect                             3.84 kB        91.2 kB
+├ ○ /dashboard                           1.91 kB         144 kB
+├ ○ /kyc-completed                       3.24 kB        99.5 kB
+├ ○ /leads                               5.25 kB         102 kB
+├ ○ /login                               2 kB             99 kB
+├ ○ /plan                                14.6 kB         102 kB
+├ ○ /settings                            3.15 kB        95.8 kB
+└ ○ /team                                5.34 kB         106 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/117-f5f17dc55cbf77ff.js       31.7 kB
+  ├ chunks/fd9d1056-5a7a0de88f0aca6d.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             49.4 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

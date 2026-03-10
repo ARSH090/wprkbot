@@ -9,7 +9,6 @@ const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'KYC Completed', href: '/kyc-completed', icon: Users },
   { name: 'Leads', href: '/leads', icon: Users },
-  { name: 'AI Training', href: '/training', icon: BrainCircuit },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Connect Messenger', href: '/connect', icon: MessageSquare },
   { name: 'Team', href: '/team', icon: Users },

@@ -1,0 +1,38 @@
+
+> bajaj-bot-dashboard@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings
+
+./app/api/training/analyze/route.js
+Attempted import error: 'pdf-parse' does not contain a default export (imported as 'pdfParse').
+
+Import trace for requested module:
+./app/api/training/analyze/route.js
+
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+Error: supabaseKey is required.
+    at new rg (E:\bajaj\bajaj-bot-dashboard\.next\server\chunks\512.js:37:48396)
+    at ry (E:\bajaj\bajaj-bot-dashboard\.next\server\chunks\512.js:37:52119)
+    at 51472 (E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\leads\route.js:1:1997)
+    at t (E:\bajaj\bajaj-bot-dashboard\.next\server\webpack-runtime.js:1:128)
+    at 81042 (E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\leads\route.js:1:492)
+    at t (E:\bajaj\bajaj-bot-dashboard\.next\server\webpack-runtime.js:1:128)
+    at t (E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\leads\route.js:1:2107)
+    at E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\leads\route.js:1:2141
+    at t.X (E:\bajaj\bajaj-bot-dashboard\.next\server\webpack-runtime.js:1:1206)
+    at E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\leads\route.js:1:2120
+
+> Build error occurred
+Error: Failed to collect page data for /api/leads
+    at E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\build\utils.js:1269:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  type: 'Error'
+}

@@ -1,45 +1,44 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
+import { supabaseServer } from '@/lib/supabase-server'
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+export const dynamic = 'force-dynamic'
 
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
     try {
-        const { id } = params
+        const body = await request.json()
+        const { status } = body
 
-        if (!id) {
-            return NextResponse.json({ error: 'Lead ID required' }, { status: 400 })
+        if (!status || !['failed', 'new', 'processing'].includes(status)) {
+            return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
         }
 
-        // Update lead status to failed
-        const { data: leadData, error: updateError } = await supabase
+        // Fetch lead messenger id for log
+        const { data: lead, error: fetchError } = await supabaseServer
             .from('leads')
-            .update({ state: 'failed', job_status: 'failed' })
-            .eq('id', id)
-            .select()
+            .select('messenger_id')
+            .eq('id', params.id)
             .single()
 
-        if (updateError) {
-            return NextResponse.json({ error: updateError.message }, { status: 500 })
-        }
+        if (fetchError) throw fetchError
 
-        // Insert log into automation_logs
-        if (leadData?.messenger_id) {
-            await supabase.from('automation_logs').insert({
-                messenger_id: leadData.messenger_id,
-                step: 'Manual Override',
-                status: 'error',
-                message: 'Lead marked as failed by admin via dashboard.',
-            })
-        }
+        const { error: updateError } = await supabaseServer
+            .from('leads')
+            .update({ status })
+            .eq('id', params.id)
 
-        return NextResponse.json({ success: true, data: leadData })
-    } catch (err) {
-        return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+        if (updateError) throw updateError
+
+        // Log manual status change
+        await supabaseServer.from('automation_logs').insert({
+            lead_id: parseInt(params.id),
+            lead_messenger_id: lead.messenger_id,
+            step: 'manual_status_change',
+            status: 'info',
+            message: `Admin manually updated status to ${status}`
+        })
+
+        return NextResponse.json({ success: true })
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
     }
 }

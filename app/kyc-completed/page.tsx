@@ -1,71 +1,37 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { formatDistanceToNow, differenceInDays, isToday, isThisWeek, isThisMonth } from 'date-fns'
+import { formatDistanceToNow, differenceInDays } from 'date-fns'
 import toast from 'react-hot-toast'
-import { Search, Download, FileText, Image as ImageIcon, Copy, CheckCircle2 } from 'lucide-react'
+import { Search, Download, Image as ImageIcon, Copy, CheckCircle2 } from 'lucide-react'
 
 export default function KycCompleted() {
     const [leads, setLeads] = useState<any[]>([])
-    const [filteredLeads, setFilteredLeads] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
-    const [search, setSearch] = useState('')
+    const [page, setPage] = useState(1)
+    const [stats, setStats] = useState({ today: 0, this_week: 0, this_month: 0, total: 0 })
     const [expandedId, setExpandedId] = useState<string | null>(null)
-
-    const [stats, setStats] = useState({ today: 0, week: 0, month: 0, allTime: 0 })
 
     useEffect(() => {
         fetchKycLeads()
-    }, [])
-
-    useEffect(() => {
-        filterData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [leads, search])
+    }, [page])
 
     const fetchKycLeads = async () => {
-        // Only fetch leads where status is explicitly kyc_completed
-        const { data } = await supabase.from('leads')
-            .select('*')
-            .eq('status', 'kyc_completed')
-            .order('kyc_completed_at', { ascending: false })
-
-        if (data) {
-            setLeads(data)
-            calculateStats(data)
+        setLoading(true)
+        try {
+            const res = await fetch(`/api/kyc?page=${page}&limit=50`)
+            if (res.ok) {
+                const data = await res.json()
+                setLeads(data.leads || [])
+                setStats(data.stats || { today: 0, this_week: 0, this_month: 0, total: 0 })
+            }
+        } catch (error) {
+            console.error("Failed to fetch KYC leads", error)
+            toast.error("Failed to load leads")
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
-    }
-
-    const calculateStats = (data: any[]) => {
-        let today = 0, week = 0, month = 0, allTime = data.length;
-
-        data.forEach(lead => {
-            if (!lead.kyc_completed_at) return;
-            const date = new Date(lead.kyc_completed_at);
-            if (isToday(date)) today++;
-            if (isThisWeek(date)) week++;
-            if (isThisMonth(date)) month++;
-        });
-
-        setStats({ today, week, month, allTime });
-    }
-
-    const filterData = () => {
-        let result = leads
-
-        if (search.trim()) {
-            const s = search.toLowerCase()
-            result = result.filter(lead =>
-                (lead.full_name && lead.full_name.toLowerCase().includes(s)) ||
-                (lead.mobile && lead.mobile.includes(s)) ||
-                (lead.secondary_name && lead.secondary_name.toLowerCase().includes(s)) ||
-                (lead.secondary_mobile && lead.secondary_mobile.includes(s))
-            )
-        }
-
-        setFilteredLeads(result)
     }
 
     const downloadCsv = () => {
@@ -73,10 +39,10 @@ export default function KycCompleted() {
         const headers = ['ID', 'Name', 'Mobile', 'Attempt Count', 'KYC Completed At', 'Days Since KYC']
         csvRows.push(headers.join(','))
 
-        for (const lead of filteredLeads) {
+        for (const lead of leads) {
             const kycDate = lead.kyc_completed_at ? new Date(lead.kyc_completed_at) : new Date();
             const daysSince = differenceInDays(new Date(), kycDate);
-            const name = lead.attempt_count > 1 ? lead.secondary_name : lead.full_name;
+            const name = lead.attempt_count > 1 ? lead.secondary_name : lead.name;
             const mobile = lead.attempt_count > 1 ? lead.secondary_mobile : lead.mobile;
 
             const row = [
@@ -125,41 +91,26 @@ export default function KycCompleted() {
             {/* Stats Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard title="Today" value={stats.today} color="text-green-400" />
-                <StatCard title="This Week" value={stats.week} color="text-green-500" />
-                <StatCard title="This Month" value={stats.month} color="text-blue-400" />
-                <StatCard title="All Time" value={stats.allTime} color="text-white" />
-            </div>
-
-            {/* Filters and Search */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between">
-                <div className="relative w-full md:w-96 text-gray-400 focus-within:text-white">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" />
-                    <input
-                        type="text"
-                        placeholder="Search by name or mobile..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-[#0d1117] border border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-green-500 transition-colors"
-                    />
-                </div>
+                <StatCard title="This Week" value={stats.this_week} color="text-green-500" />
+                <StatCard title="This Month" value={stats.this_month} color="text-blue-400" />
+                <StatCard title="All Time" value={stats.total} color="text-white" />
             </div>
 
             {/* Leads List */}
             <div className="space-y-3">
                 {loading ? (
                     <div className="text-center py-12 text-gray-500">Loading KYC leads...</div>
-                ) : filteredLeads.length === 0 ? (
+                ) : leads.length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-[#0d1117] border border-gray-800 rounded-xl">No completed KYC records found.</div>
                 ) : (
-                    filteredLeads.map((lead) => {
+                    leads.map((lead) => {
                         const kycDate = lead.kyc_completed_at ? new Date(lead.kyc_completed_at) : new Date();
                         const daysSince = differenceInDays(new Date(), kycDate);
                         const attempt = lead.attempt_count || 1;
                         const isSecondary = attempt > 1;
 
-                        const displayName = isSecondary ? lead.secondary_name : lead.full_name;
-                        const displayMobile = isSecondary ? lead.secondary_mobile : lead.mobile;
-                        const displayPan = isSecondary ? lead.secondary_pan : lead.pan;
+                        const displayName = isSecondary && lead.secondary_name ? lead.secondary_name : lead.name;
+                        const displayMobile = isSecondary && lead.secondary_mobile ? lead.secondary_mobile : lead.mobile;
 
                         return (
                             <div key={lead.id} className="bg-[#0d1117] border border-gray-800 rounded-xl overflow-hidden transition-all hover:border-gray-700">
@@ -211,10 +162,9 @@ export default function KycCompleted() {
                                                 <div className="space-y-2 text-sm bg-gray-900/50 p-4 rounded-lg border border-gray-800">
                                                     <div className="flex justify-between"><span className="text-gray-500">Full Name</span> <span className="text-white font-medium">{displayName}</span></div>
                                                     <div className="flex justify-between"><span className="text-gray-500">Mobile</span> <span className="text-white font-medium">{displayMobile}</span></div>
-                                                    <div className="flex justify-between"><span className="text-gray-500">PAN</span> <span className="text-white font-medium">{displayPan}</span></div>
                                                     {isSecondary && (
                                                         <div className="mt-4 pt-4 border-t border-gray-800 text-xs text-gray-500">
-                                                            This KYC was completed using secondary details provided after the primary details failed. Primary Name: {lead.full_name}.
+                                                            This KYC was completed using secondary details provided after the primary details failed. Primary Name: {lead.name}.
                                                         </div>
                                                     )}
                                                 </div>

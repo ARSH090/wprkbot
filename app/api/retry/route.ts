@@ -1,59 +1,71 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
+import { supabaseServer } from '@/lib/supabase-server'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
-    const { messenger_id } = await request.json()
+    const body = await request.json()
+    const { leadId } = body
 
-    if (!messenger_id) {
-      return NextResponse.json({ error: 'messenger_id required' }, { status: 400 })
+    if (!leadId) {
+      return NextResponse.json({ error: 'Lead ID required' }, { status: 400 })
     }
 
-    // Update lead status to "retrying"
-    const { data: leadData, error: updateError } = await supabase
+    // 1 & 2. Fetch lead from Supabase
+    const { data: lead, error: fetchError } = await supabaseServer
       .from('leads')
-      .update({ state: 'retrying', job_status: 'retrying' })
-      .eq('messenger_id', messenger_id)
-      .select()
+      .select('*')
+      .eq('id', leadId)
       .single()
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    if (fetchError || !lead) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
     }
 
-    // Fetch n8n Webhook URL from bot_settings
-    const { data: settings } = await supabase
-      .from('bot_settings')
-      .select('value')
-      .eq('key', 'n8n_webhook_url')
-      .single()
+    // 3. Reset lead: status=processing, state=collecting, attempt_count stays same
+    const { error: resetError } = await supabaseServer
+      .from('leads')
+      .update({
+        status: 'processing',
+        state: 'collecting'
+        // attempt_count stays the same as per spec
+      })
+      .eq('id', leadId)
 
-    // Fallback to Env variable if not in DB
-    const n8nUrl = settings?.value || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL
+    if (resetError) throw resetError
 
+    // 4. POST to N8N_WEBHOOK_URL env variable
+    const n8nUrl = process.env.N8N_WEBHOOK_URL
     if (n8nUrl) {
       try {
         await fetch(n8nUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'retry', lead: leadData }),
+          body: JSON.stringify({
+            type: 'retry',
+            leadId: leadId,
+            senderId: lead.messenger_id,
+            lead: lead
+          })
         })
-      } catch (err) {
-        console.error('Failed to notify n8n', err)
+      } catch (fetchErr) {
+        console.error("Failed to call n8n webhook", fetchErr)
+        // Continue execution even if webhook fails (or should we throw?)
       }
-    } else {
-      console.warn('No n8n webhook URL configured')
     }
 
-    return NextResponse.json({ success: true, data: leadData })
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    // 5. Insert in automation_logs
+    await supabaseServer.from('automation_logs').insert({
+      lead_id: parseInt(leadId),
+      lead_messenger_id: lead.messenger_id,
+      step: 'manual_retry',
+      status: 'info',
+      message: 'Manual retry triggered from dashboard'
+    })
+
+    return NextResponse.json({ success: true, message: 'Retry triggered' })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

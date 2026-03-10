@@ -1,0 +1,30 @@
+
+> bajaj-bot-dashboard@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+Error: supabaseKey is required.
+    at new rg (E:\bajaj\bajaj-bot-dashboard\.next\server\chunks\512.js:37:48396)
+    at ry (E:\bajaj\bajaj-bot-dashboard\.next\server\chunks\512.js:37:52119)
+    at 51472 (E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\kyc\route.js:1:2088)
+    at t (E:\bajaj\bajaj-bot-dashboard\.next\server\webpack-runtime.js:1:128)
+    at 70472 (E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\kyc\route.js:1:506)
+    at t (E:\bajaj\bajaj-bot-dashboard\.next\server\webpack-runtime.js:1:128)
+    at a (E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\kyc\route.js:1:2198)
+    at E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\kyc\route.js:1:2232
+    at t.X (E:\bajaj\bajaj-bot-dashboard\.next\server\webpack-runtime.js:1:1206)
+    at E:\bajaj\bajaj-bot-dashboard\.next\server\app\api\kyc\route.js:1:2211
+
+> Build error occurred
+Error: Failed to collect page data for /api/kyc
+    at E:\bajaj\bajaj-bot-dashboard\node_modules\next\dist\build\utils.js:1269:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  type: 'Error'
+}
