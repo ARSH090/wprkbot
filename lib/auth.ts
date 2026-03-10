@@ -12,36 +12,54 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log("Auth Attempt:", credentials?.email);
+
                 if (!credentials?.email || !credentials?.password) {
+                    console.log("Auth Fail: Missing credentials");
                     return null;
                 }
 
-                // Fetch the user from Supabase admin_users table using SERVICE_ROLE
-                const { data: user, error } = await supabaseServer
-                    .from("admin_users")
-                    .select("*")
-                    .eq("email", credentials.email)
-                    .single();
+                try {
+                    // Fetch the user from Supabase admin_users table using SERVICE_ROLE
+                    const { data: user, error } = await supabaseServer
+                        .from("admin_users")
+                        .select("*")
+                        .eq("email", credentials.email)
+                        .single();
 
-                if (error || !user) {
-                    console.error("Auth error:", error);
+                    if (error) {
+                        console.error("Supabase Auth Error:", error.message);
+                        return null;
+                    }
+
+                    if (!user) {
+                        console.log("Auth Fail: User not found in database:", credentials.email);
+                        return null;
+                    }
+
+                    console.log("User found, comparing passwords...");
+
+                    // Verify the password hash using bcrypt
+                    const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
+
+                    if (!isPasswordValid) {
+                        console.log("Auth Fail: Password mismatch for:", credentials.email);
+                        return null;
+                    }
+
+                    console.log("Auth Success:", user.email);
+
+                    // Return user object
+                    return {
+                        id: user.id.toString(),
+                        email: user.email,
+                        name: user.role,
+                        role: user.role,
+                    };
+                } catch (err: any) {
+                    console.error("JWT Authorize Exception:", err.message);
                     return null;
                 }
-
-                // Verify the password hash using bcrypt
-                const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
-
-                if (!isPasswordValid) {
-                    return null;
-                }
-
-                // Return user object
-                return {
-                    id: user.id.toString(),
-                    email: user.email,
-                    name: user.role, // Using 'name' to store the role temporarily
-                    role: user.role, // Custom field
-                };
             }
         })
     ],
