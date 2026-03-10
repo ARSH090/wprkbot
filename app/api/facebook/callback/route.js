@@ -15,10 +15,13 @@ export async function GET(request) {
         }
 
         // 1. Exchange code for user access token
+        const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.FACEBOOK_APP_ID;
+        const appSecret = process.env.FACEBOOK_APP_SECRET;
+
         const tokenUrl = new URL('https://graph.facebook.com/v18.0/oauth/access_token');
-        tokenUrl.searchParams.append('client_id', process.env.FACEBOOK_APP_ID);
-        tokenUrl.searchParams.append('client_secret', process.env.FACEBOOK_APP_SECRET);
-        tokenUrl.searchParams.append('redirect_uri', `${process.env.NEXTAUTH_URL}/api/facebook/callback`);
+        tokenUrl.searchParams.append('client_id', appId);
+        tokenUrl.searchParams.append('client_secret', appSecret);
+        tokenUrl.searchParams.append('redirect_uri', `${process.env.NEXTAUTH_URL || ''}/api/facebook/callback`);
         tokenUrl.searchParams.append('code', code);
 
         const tokenRes = await fetch(tokenUrl.toString());
@@ -34,8 +37,8 @@ export async function GET(request) {
         // 2. Get long-lived user token
         const longLivedUrl = new URL('https://graph.facebook.com/v18.0/oauth/access_token');
         longLivedUrl.searchParams.append('grant_type', 'fb_exchange_token');
-        longLivedUrl.searchParams.append('client_id', process.env.FACEBOOK_APP_ID);
-        longLivedUrl.searchParams.append('client_secret', process.env.FACEBOOK_APP_SECRET);
+        longLivedUrl.searchParams.append('client_id', appId);
+        longLivedUrl.searchParams.append('client_secret', appSecret);
         longLivedUrl.searchParams.append('fb_exchange_token', shortLivedToken);
 
         const longLivedRes = await fetch(longLivedUrl.toString());
