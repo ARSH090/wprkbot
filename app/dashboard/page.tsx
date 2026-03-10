@@ -42,7 +42,10 @@ export default function Dashboard() {
         const pending = leads.filter(l => l.state !== 'completed' && l.state !== 'rejected' && l.state !== 'failed').length
         const successRate = total > 0 ? Math.round((approved / total) * 100) : 0
 
-        setStats({ total, approved, rejected, pending, successRate })
+        const today = new Date().toISOString().split('T')[0]
+        const kycToday = leads.filter(l => l.status === 'kyc_completed' && l.kyc_completed_at && l.kyc_completed_at.startsWith(today)).length
+
+        setStats({ total, approved, rejected, pending, successRate, kycToday } as any)
     }
 
     const fetchActivityFeed = async () => {
@@ -62,8 +65,9 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <StatCard title="Total Leads" value={stats.total} />
+                <StatCard title="KYC Done Today" value={(stats as any).kycToday || 0} color="text-green-400" />
                 <StatCard title="Approved Today" value={stats.approved} color="text-green-500" />
                 <StatCard title="Rejected Today" value={stats.rejected} color="text-red-500" />
                 <StatCard title="Pending" value={stats.pending} color="text-orange-500" />
