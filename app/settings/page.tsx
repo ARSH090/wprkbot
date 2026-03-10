@@ -105,13 +105,13 @@ export default function Settings() {
                     <div className="p-6 space-y-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">OpenAI API Key</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">AI API Key (OpenRouter/OpenAI)</label>
                                 <input
                                     type="password"
                                     value={settings.openai_api_key as string}
                                     onChange={(e) => setSettings({ ...settings, openai_api_key: e.target.value })}
                                     className="w-full bg-[#030305] border border-gray-800 rounded-lg p-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
-                                    placeholder="sk-..."
+                                    placeholder="sk-or-v1-..."
                                 />
                             </div>
                             <div className="flex items-center h-full pt-6">
@@ -137,7 +137,7 @@ export default function Settings() {
                                 className="w-full bg-[#030305] border border-gray-800 rounded-lg p-3 text-sm text-gray-300 focus:border-blue-500 focus:outline-none transition-colors h-32 focus:text-white"
                                 placeholder="You are a helpful assistant..."
                             />
-                            <p className="text-xs text-gray-500 mt-2">This prompt dictates the behavior of the OpenAI integration in the n8n workflow.</p>
+                            <p className="text-xs text-gray-500 mt-2">This prompt dictates the personality and rules for your AI bot (via OpenRouter or OpenAI).</p>
                         </div>
                     </div>
                 </div>
