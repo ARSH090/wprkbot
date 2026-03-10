@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
@@ -16,8 +16,8 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                // Fetch the user from Supabase admin_users table
-                const { data: user, error } = await supabase
+                // Fetch the user from Supabase admin_users table using SERVICE_ROLE
+                const { data: user, error } = await supabaseServer
                     .from("admin_users")
                     .select("*")
                     .eq("email", credentials.email)
