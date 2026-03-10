@@ -21,12 +21,14 @@ export async function POST(request) {
         const pageIdRow = settingsData.find(s => s.key === 'fb_page_id');
         const adminIdRow = settingsData.find(s => s.key === 'admin_messenger_id');
 
-        if (!tokenRow?.value || !pageIdRow?.value) {
-            return NextResponse.json({ error: 'Facebook Page is not fully configured' }, { status: 400 });
+        if (!adminIdRow?.value) {
+            return NextResponse.json({
+                success: false,
+                error: 'Admin Messenger ID missing. Please go to Settings and enter your Facebook PSID to receive the test message.'
+            }, { status: 400 });
         }
 
-        // Use admin ID if available, otherwise fallback to page ID (self test)
-        const recipientId = adminIdRow?.value || pageIdRow?.value;
+        const recipientId = adminIdRow.value;
 
         // 2. Call Facebook Graph API to send test message
         const fbUrl = `https://graph.facebook.com/v18.0/me/messages?access_token=${tokenRow.value}`;
